@@ -2,13 +2,18 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no"
+    >
 
-    <title>AR Image Tracking - MindAR & Three.js</title>
+    <title>MindAR Test</title>
 
     <style>
-        html, body {
+        html,
+        body {
             margin: 0;
+            padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
@@ -16,19 +21,29 @@
 
         #ar-container {
             position: absolute;
-            inset: 0;
             width: 100%;
             height: 100%;
+            top: 0;
+            left: 0;
         }
     </style>
 
-    <script src="https://unpkg.com/three@0.160.0/build/three.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"></script>
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+            "mindar-image-three": "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+        }
+    }
+    </script>
 </head>
 
 <body>
+
     <div id="ar-container"></div>
 
-    <script src="./app.js"></script>
+    <script type="module" src="./app.js"></script>
+
 </body>
 </html>
