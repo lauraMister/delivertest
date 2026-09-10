@@ -1,60 +1,80 @@
 import * as THREE from "three";
 import { MindARThree } from "mindar-image-three";
 
-const start = async () => {
+const status = document.querySelector("#status");
+const startButton = document.querySelector("#startButton");
 
-    console.log("Avvio MindAR...");
+status.innerHTML = "JavaScript caricato ✓";
 
-    const mindarThree = new MindARThree({
+let mindarThree;
+
+try {
+
+    status.innerHTML += "<br>Creazione MindAR...";
+
+    mindarThree = new MindARThree({
         container: document.querySelector("#ar-container"),
         imageTargetSrc: "./asset/image.mind"
     });
+
+    status.innerHTML += "<br>MindAR creato ✓";
 
     const { renderer, scene, camera } = mindarThree;
 
     const anchor = mindarThree.addAnchor(0);
 
-    const geometry = new THREE.BoxGeometry(1, 1, 1);
+    const geometry = new THREE.PlaneGeometry(1, 1);
 
     const material = new THREE.MeshBasicMaterial({
         color: 0x00ffff,
-        wireframe: true
+        transparent: true,
+        opacity: 0.7
     });
 
-    const cube = new THREE.Mesh(geometry, material);
+    const plane = new THREE.Mesh(geometry, material);
 
-    cube.position.z = 0.5;
+    anchor.group.add(plane);
 
-    anchor.group.add(cube);
+    status.innerHTML += "<br>Anchor creato ✓";
 
-    try {
+    startButton.addEventListener("click", async () => {
 
-        console.log("Richiesta accesso fotocamera...");
+        try {
 
-        await mindarThree.start();
+            status.innerHTML += "<br>Avvio fotocamera...";
 
-        console.log("MindAR avviato correttamente");
+            await mindarThree.start();
 
-        renderer.setAnimationLoop(() => {
-            renderer.render(scene, camera);
-        });
+            status.innerHTML += "<br>Fotocamera avviata ✓";
 
-    } catch (error) {
+            startButton.style.display = "none";
 
-        console.error("ERRORE MINDAR:", error);
+            renderer.setAnimationLoop(() => {
+                renderer.render(scene, camera);
+            });
 
-        document.body.innerHTML = `
-            <div style="
-                padding:20px;
-                font-family:Arial;
-                color:red;
-                background:white;
-            ">
-                <h2>Errore MindAR</h2>
-                <pre>${error.message || error}</pre>
-            </div>
-        `;
-    }
-};
+        } catch (error) {
 
-start();
+            status.innerHTML += `
+                <br><strong style="color:red">
+                ERRORE START:<br>
+                ${error.message || error}
+                </strong>
+            `;
+
+            console.error(error);
+        }
+
+    });
+
+} catch (error) {
+
+    status.innerHTML += `
+        <br><strong style="color:red">
+        ERRORE INIZIALIZZAZIONE:<br>
+        ${error.message || error}
+        </strong>
+    `;
+
+    console.error(error);
+}
