@@ -117,11 +117,34 @@ function createAR() {
             imageTargetSrc:
                 "./asset/image.mind",
 
+            /*
+               filterMinCF / filterBeta controllano
+               lo smoothing del tracking (one-euro
+               filter). filterBeta troppo basso
+               (es. 0.001 invece del default 1000)
+               fa oscillare la confidenza sopra e
+               sotto soglia, causando agganci e
+               sganci continui del target.
+            */
+
             filterMinCF:
-                0.001,
+                0.0001,
 
             filterBeta:
-                0.001
+                1000,
+
+            /*
+               Più tolleranza prima di dichiarare
+               il target "perso": evita che un
+               tremolio della mano o un calo di
+               fuoco/luce stacchino il video.
+            */
+
+            warmupTolerance:
+                10,
+
+            missTolerance:
+                10
         });
 
 
