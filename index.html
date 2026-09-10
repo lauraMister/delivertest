@@ -2,6 +2,7 @@
 <html lang="it">
 <head>
     <meta charset="UTF-8">
+
     <meta
         name="viewport"
         content="width=device-width, initial-scale=1.0, user-scalable=no"
@@ -10,21 +11,39 @@
     <title>MindAR Test</title>
 
     <style>
-        html,
-        body {
+        html, body {
             margin: 0;
-            padding: 0;
             width: 100%;
             height: 100%;
             overflow: hidden;
+            font-family: Arial, sans-serif;
         }
 
         #ar-container {
             position: absolute;
+            inset: 0;
             width: 100%;
             height: 100%;
-            top: 0;
-            left: 0;
+        }
+
+        #ui {
+            position: fixed;
+            z-index: 9999;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+        }
+
+        #startButton {
+            font-size: 20px;
+            padding: 15px 25px;
+        }
+
+        #status {
+            margin-top: 10px;
+            padding: 10px;
+            background: white;
+            color: black;
         }
     </style>
 
@@ -40,6 +59,11 @@
 </head>
 
 <body>
+
+    <div id="ui">
+        <button id="startButton">AVVIA AR</button>
+        <div id="status">Pagina caricata</div>
+    </div>
 
     <div id="ar-container"></div>
 
