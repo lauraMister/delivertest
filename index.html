@@ -1,469 +1,404 @@
-import * as THREE from "three";
-import { MindARThree } from "mindar-image-three";
+<!DOCTYPE html>
+<html lang="it">
 
+<head>
+    <meta charset="UTF-8">
 
-/* =========================================
-   ELEMENTI INTERFACCIA
-========================================= */
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0, user-scalable=no"
+    >
 
-const welcomeScreen =
-    document.querySelector("#welcome-screen");
+    <title>Scenario Numero 1</title>
 
-const welcomeText =
-    document.querySelector("#welcome-text");
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 
-const instructions =
-    document.querySelector("#instructions");
+    <link
+        href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;700;800&display=swap"
+        rel="stylesheet"
+    >
 
-const typingText =
-    document.querySelector("#typing-text");
+    <style>
 
-const startButton =
-    document.querySelector("#start-button");
-
-const arMessage =
-    document.querySelector("#ar-message");
-
-const arVideo =
-    document.querySelector("#ar-video");
-
-
-let firstStep = true;
-
-let mindarThree = null;
-
-let arStarted = false;
-
-
-/* =========================================
-   EFFETTO MACCHINA DA SCRIVERE
-========================================= */
-
-function typeWriter(
-    text,
-    element,
-    speed = 35,
-    callback
-) {
-
-    let i = 0;
-
-    element.innerHTML = "";
-
-    element.style.opacity = "1";
-
-    element.classList.add("cursor");
-
-
-    function type() {
-
-        if (i < text.length) {
-
-            if (
-                text.substring(i, i + 4) === "<br>"
-            ) {
-
-                element.innerHTML += "<br>";
-
-                i += 4;
-
-            } else {
-
-                element.innerHTML +=
-                    text.charAt(i);
-
-                i++;
-            }
-
-
-            setTimeout(
-                type,
-                speed
-            );
-
-        } else {
-
-            element.classList.remove(
-                "cursor"
-            );
-
-
-            if (callback) {
-                callback();
-            }
+        * {
+            box-sizing: border-box;
         }
-    }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: black;
+            font-family: "Manrope", sans-serif;
+        }
 
 
-    type();
-}
+        /* ==============================
+           SCHERMATA INIZIALE
+        ============================== */
 
+        #welcome-screen {
+            position: fixed;
+            inset: 0;
 
+            width: 100%;
+            height: 100%;
 
-/* =========================================
-   CREA ESPERIENZA AR
-========================================= */
-
-function createAR() {
-
-    mindarThree =
-        new MindARThree({
-
-            container:
-                document.querySelector(
-                    "#ar-container"
-                ),
-
-            imageTargetSrc:
-                "./asset/image.mind",
-
-            filterMinCF:
-                0.001,
-
-            filterBeta:
-                0.001
-        });
-
-
-    const {
-        renderer,
-        scene,
-        camera
-    } = mindarThree;
-
-
-    /* -----------------------------------------
-       Anchor associato al target index 0
-    ----------------------------------------- */
-
-    const anchor =
-        mindarThree.addAnchor(0);
-
-
-
-    /* -----------------------------------------
-       VIDEO TEXTURE
-    ----------------------------------------- */
-
-    const videoTexture =
-        new THREE.VideoTexture(arVideo);
-
-
-    videoTexture.colorSpace =
-        THREE.SRGBColorSpace;
-
-
-    videoTexture.minFilter =
-        THREE.LinearFilter;
-
-    videoTexture.magFilter =
-        THREE.LinearFilter;
-
-
-    const geometry =
-        new THREE.PlaneGeometry(
-            1,
-            0.5625
-        );
-
-
-    const material =
-        new THREE.MeshBasicMaterial({
-
-            map:
-                videoTexture,
-
-            side:
-                THREE.DoubleSide
-
-        });
-
-
-    const videoPlane =
-        new THREE.Mesh(
-            geometry,
-            material
-        );
-
-
-    /*
-       Il piano viene posizionato leggermente
-       davanti al target per evitare flickering.
-    */
-
-    videoPlane.position.z =
-        0.01;
-
-
-    anchor.group.add(
-        videoPlane
-    );
-
-
-
-    /* =========================================
-       TARGET TROVATO
-    ========================================= */
-
-    anchor.onTargetFound = () => {
-
-        console.log(
-            "Target trovato"
-        );
-
-
-        arMessage.style.display =
-            "none";
-
-
-        arVideo.play()
-            .catch((error) => {
-
-                console.warn(
-                    "Impossibile avviare il video:",
-                    error
+            background:
+                linear-gradient(
+                    135deg,
+                    #0f2027 0%,
+                    #203a43 50%,
+                    #2c5364 100%
                 );
 
-            });
+            display: flex;
+            flex-direction: column;
 
-    };
+            justify-content: center;
+            align-items: center;
 
+            color: #faf8fc;
 
+            z-index: 1000;
 
-    /* =========================================
-       TARGET PERSO
-    ========================================= */
-
-    anchor.onTargetLost = () => {
-
-        console.log(
-            "Target perso"
-        );
-
-
-        arVideo.pause();
-
-
-        arMessage.textContent =
-            "Inquadra la mappa";
-
-
-        arMessage.style.display =
-            "block";
-
-    };
-
-
-
-    return {
-        renderer,
-        scene,
-        camera
-    };
-}
-
-
-
-/* =========================================
-   AVVIA MINDAR
-========================================= */
-
-async function startAR() {
-
-    if (arStarted) {
-        return;
-    }
-
-
-    arStarted = true;
-
-
-    try {
-
-        /*
-           Importante:
-           MindAR parte SOLO dopo il click
-           dell'utente.
-
-           È questa la configurazione che nel
-           test ha fatto funzionare correttamente
-           la fotocamera.
-        */
-
-        const {
-            renderer,
-            scene,
-            camera
-        } = createAR();
-
-
-        arMessage.textContent =
-            "Avvio fotocamera...";
-
-
-        arMessage.style.display =
-            "block";
-
-
-        await mindarThree.start();
-
-
-        console.log(
-            "MindAR avviato"
-        );
-
-
-        arMessage.textContent =
-            "Inquadra la mappa";
-
-
-        /*
-           Prepariamo il video tramite gesture
-           dell'utente.
-
-           Serve soprattutto su iPhone/Safari.
-        */
-
-        try {
-
-            await arVideo.play();
-
-            arVideo.pause();
-
-            arVideo.currentTime = 0;
-
-        } catch (error) {
-
-            console.log(
-                "Video in attesa del target",
-                error
-            );
-
+            overflow: hidden;
         }
 
 
+        #welcome-screen::before {
+            content: "";
 
-        renderer.setAnimationLoop(
-            () => {
+            position: absolute;
+            inset: 0;
 
-                renderer.render(
-                    scene,
-                    camera
-                );
+            background-image:
+                url("https://www.transparenttextures.com/patterns/papyros.png");
 
+            opacity: 0.1;
+
+            pointer-events: none;
+        }
+
+
+        /* ==============================
+           SCENARIO
+        ============================== */
+
+        #welcome-text {
+            position: relative;
+
+            margin: 0 20px 20px;
+
+            color: #ffd700;
+
+            text-align: center;
+
+            font-size: clamp(2rem, 9vw, 3rem);
+            font-weight: 800;
+
+            text-shadow:
+                2px 2px 4px rgba(0, 0, 0, 0.5);
+
+            transition:
+                opacity 0.8s ease,
+                transform 0.8s ease;
+        }
+
+
+        .fade-out-up {
+            opacity: 0;
+
+            transform:
+                translateY(-30px);
+        }
+
+
+        /* ==============================
+           ISTRUZIONI
+        ============================== */
+
+        #instructions {
+            position: absolute;
+
+            top: 25%;
+
+            width: 100%;
+
+            padding: 0 20px;
+
+            margin: 0;
+
+            color: #ffd700;
+
+            font-size: clamp(1.7rem, 7vw, 2.3rem);
+
+            text-align: center;
+
+            opacity: 0;
+
+            transform:
+                translateY(30px);
+
+            pointer-events: none;
+
+            transition:
+                opacity 0.8s ease,
+                transform 0.8s ease;
+        }
+
+
+        #instructions.fade-in-up {
+            opacity: 1;
+
+            transform:
+                translateY(0);
+        }
+
+
+        #typing-text {
+            position: absolute;
+
+            top: 38%;
+
+            width: 80%;
+            max-width: 500px;
+
+            min-height: 3em;
+
+            margin: 0;
+
+            color: #faf8fc;
+
+            font-size: clamp(1rem, 4.5vw, 1.25rem);
+
+            line-height: 1.4;
+
+            text-align: center;
+
+            text-transform: lowercase;
+
+            opacity: 0;
+        }
+
+
+        .cursor::after {
+            content: "_";
+
+            color: #ffd700;
+
+            animation:
+                blink 0.7s infinite;
+        }
+
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
             }
-        );
 
-
-    } catch (error) {
-
-        console.error(
-            "Errore MindAR:",
-            error
-        );
-
-
-        arStarted = false;
-
-
-        arMessage.innerHTML =
-            `
-            Errore durante l'avvio AR.<br>
-            ${error.message || error}
-            `;
-
-
-        arMessage.style.display =
-            "block";
-
-    }
-}
-
-
-
-/* =========================================
-   PULSANTE INTRO
-========================================= */
-
-startButton.addEventListener(
-    "click",
-    async () => {
-
-
-        /* -------------------------------------
-           PRIMO CLICK
-        ------------------------------------- */
-
-        if (firstStep) {
-
-            welcomeText.classList.add(
-                "fade-out-up"
-            );
-
-
-            startButton.classList.add(
-                "hidden"
-            );
-
-
-            setTimeout(
-                () => {
-
-                    instructions.classList.add(
-                        "fade-in-up"
-                    );
-
-
-                    startButton.textContent =
-                        "vai";
-
-
-                    setTimeout(
-                        () => {
-
-                            typeWriter(
-                                "quando si apre la fotocamera,<br>inquadra la mappa",
-                                typingText,
-                                35,
-                                () => {
-
-                                    startButton.classList.remove(
-                                        "hidden"
-                                    );
-
-                                }
-                            );
-
-                        },
-                        600
-                    );
-
-                },
-                600
-            );
-
-
-            firstStep = false;
-
-            return;
+            50% {
+                opacity: 0;
+            }
         }
 
 
+        /* ==============================
+           PULSANTE
+        ============================== */
 
-        /* -------------------------------------
-           SECONDO CLICK: AVVIO AR
-        ------------------------------------- */
+        #start-button {
+            position: relative;
 
-        startButton.classList.add(
-            "hidden"
-        );
+            margin-top: 150px;
+
+            min-width: 200px;
+
+            padding: 15px 50px;
+
+            border: none;
+            border-radius: 30px;
+
+            background: #ffd700;
+
+            color: #333;
+
+            font-family: inherit;
+            font-size: 1.2rem;
+            font-weight: 700;
+
+            text-transform: uppercase;
+            letter-spacing: 2px;
+
+            cursor: pointer;
+
+            box-shadow:
+                0 4px 15px rgba(0, 0, 0, 0.3);
+
+            transition:
+                opacity 0.3s ease,
+                transform 0.3s ease;
+        }
 
 
-        welcomeScreen.style.display =
-            "none";
+        #start-button:active {
+            transform:
+                scale(0.95);
+        }
 
 
-        await startAR();
+        #start-button.hidden {
+            opacity: 0;
 
+            pointer-events: none;
+
+            transform:
+                scale(0.8);
+        }
+
+
+        /* ==============================
+           CONTENITORE AR
+        ============================== */
+
+        #ar-container {
+            position: fixed;
+
+            inset: 0;
+
+            width: 100%;
+            height: 100%;
+
+            z-index: 1;
+        }
+
+
+        /* ==============================
+           MESSAGGI AR
+        ============================== */
+
+        #ar-message {
+            position: fixed;
+
+            z-index: 500;
+
+            top: 25px;
+            left: 50%;
+
+            transform:
+                translateX(-50%);
+
+            padding: 10px 18px;
+
+            border-radius: 20px;
+
+            background:
+                rgba(0, 0, 0, 0.65);
+
+            color: white;
+
+            font-size: 14px;
+
+            text-align: center;
+
+            display: none;
+
+            pointer-events: none;
+        }
+
+    </style>
+
+
+    <!-- Import map Three.js + MindAR -->
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three":
+                "https://unpkg.com/three@0.160.0/build/three.module.js",
+
+            "three/addons/":
+                "https://unpkg.com/three@0.160.0/examples/jsm/",
+
+            "mindar-image-three":
+                "https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-three.prod.js"
+        }
     }
-);
+    </script>
+
+</head>
+
+
+<body>
+
+
+    <!-- ==============================
+         INTRO
+    ============================== -->
+
+    <div id="welcome-screen">
+
+        <h1 id="welcome-text">
+            SCENARIO NUMERO 1
+        </h1>
+
+
+        <h1 id="instructions">
+            ISTRUZIONI
+        </h1>
+
+
+        <p id="typing-text"></p>
+
+
+        <button id="start-button">
+            inizia
+        </button>
+
+    </div>
+
+
+
+    <!-- ==============================
+         AR
+    ============================== -->
+
+    <div id="ar-container"></div>
+
+
+    <div id="ar-message">
+        Inquadra la mappa
+    </div>
+
+
+
+    <!-- Video usato come texture AR -->
+
+    <video
+        id="ar-video"
+        src="./asset/video.mp4"
+        loop
+        muted
+        playsinline
+        webkit-playsinline
+        preload="auto"
+        style="display:none"
+    ></video>
+
+
+
+    <script
+        type="module"
+        src="./app.js"
+    ></script>
+
+
+</body>
+
+</html>
